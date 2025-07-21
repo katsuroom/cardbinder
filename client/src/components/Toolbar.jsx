@@ -20,7 +20,6 @@ export default function Toolbar() {
             if(store.hasCard[i] == true) {
                 const index = i;
                 const canvas = document.getElementById("card-" + index);
-                const dataURL = canvas.toDataURL();
 
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
 
@@ -58,21 +57,7 @@ export default function Toolbar() {
                     util.blobTobase64(blob)
                     .then(base64 => {
                         // draw to canvas
-                        const canvas = document.getElementById(canvasId);
-                        const ctx = canvas.getContext("2d");
-
-                        const image = new Image();
-                        image.src = base64;
-
-                        image.onload = () => {
-                            const newWidth = canvas.width;
-                            const newHeight = (image.height / image.width) * newWidth;
-
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.drawImage(image, 0, 0, newWidth, newHeight);
-
-                            store.setHasCard(index, true);
-                        };
+                        store.drawCanvas(index, base64);
                     });
                 });
             });

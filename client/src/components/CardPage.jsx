@@ -2,7 +2,9 @@ import Card from "./Card";
 
 export default function CardPage(props) {
     return (
-        <div className="card-page">
+        <div
+            className="card-page"
+        >
             <div style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr 1fr",

@@ -13,6 +13,7 @@ export default function Card(props) {
     const canvasRef = useRef(null);
 
     useLayoutEffect(() => {
+        store.canvasRefs.current[props.num] = canvasRef.current;
         canvasRef.current.width = cardRef.current?.clientWidth;
         canvasRef.current.height = cardRef.current?.clientHeight;
     }, []);
@@ -25,10 +26,6 @@ export default function Card(props) {
     }
 
     const handleRightClick = (e) => {
-        e.preventDefault();
-        return;
-        
-        
     }
 
     const handleKeyDown = (e) => {
@@ -53,8 +50,12 @@ export default function Card(props) {
 
     }
 
-    const handleCopy = () => {
-        console.log("Source", canvasRef.current);
+    const handleCopy = async () => {
+        navigator.clipboard.write([
+            new ClipboardItem({
+                "text/html": new Blob([canvasRef.current.outerHTML], {type: "text/html"})
+            })
+        ]);
     }
 
     const handlePaste = async (e) => {
@@ -66,30 +67,29 @@ export default function Card(props) {
         for(const item of items) {
 
             // get image mimetype
-            const mimeType = item.types.find(type => type.startsWith("image/"));
-            if(!mimeType)
-                continue;
+            const imageType = item.types.find(type => type.startsWith("image/"));
+            if(imageType) {
+                // paste image data
+                const blob = await item.getType(imageType);
+                const base64 = await util.blobTobase64(blob);
 
-            const blob = await item.getType(mimeType);
-            const base64 = await util.blobTobase64(blob);
+                store.drawCanvas(props.num, base64);
+            }
+            else if(item.types.includes("text/html")) {
+                // paste from another canvas
+                const blob = await item.getType("text/html");
+                const html = await blob.text();
+                
+                const parser = new DOMParser();
+                const el = parser.parseFromString(html, "text/html");
+                const canvas = el.querySelector("canvas");
 
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext("2d");
+                if(canvas) {
+                    store.copyCanvas(props.num, Number(canvas.id.replace("card-", "")));
+                }
+            }
 
-            const image = new Image();
-            image.src = base64;
-            setIsLoading(true);
-
-            image.onload = () => {
-                const newWidth = canvas.width;
-                const newHeight = (image.height / image.width) * newWidth;
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(image, 0, 0, newWidth, newHeight);
-                setIsLoading(false);
-
-                store.setHasCard(props.num, true);
-            };
+            
         }
     }
 

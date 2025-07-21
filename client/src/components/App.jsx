@@ -8,7 +8,6 @@ export default function App() {
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             e.preventDefault();
-            e.returnValue();
             e.returnValue = "";
         };
 
