@@ -29,18 +29,18 @@ export function StoreContextProvider({children}) {
         }
     }
 
-    store.setHasCard = function(index, value) {
+    store.setHasCard = (index, value) => {
         dispatch({
             type: StoreAction.SET_HAS_CARD,
             payload: { index, value }
         });
     }
 
-    store.getCanvasElement = function(index) {
+    store.getCanvasElement = (index) => {
         return store.canvasRefs.current[index];
     }
 
-    store.drawCanvas = async function(index, base64) {
+    store.drawCanvas = async (index, base64) => {
 
         const canvas = store.getCanvasElement(index);
         const ctx = canvas.getContext("2d");
@@ -59,7 +59,7 @@ export function StoreContextProvider({children}) {
         };
     }
 
-    store.copyCanvas = async function(destIndex, srcIndex) {
+    store.copyCanvas = async (srcIndex, destIndex) => {
 
         const src = store.getCanvasElement(srcIndex);
         if(store.hasCard[srcIndex] == false)
@@ -74,6 +74,13 @@ export function StoreContextProvider({children}) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(src, 0, 0, newWidth, newHeight);
         store.setHasCard(destIndex, true);
+    }
+
+    store.clearCanvas = (index) => {
+        const canvas = store.getCanvasElement(index);
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        store.setHasCard(index, false);
     }
 
     return (

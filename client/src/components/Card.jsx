@@ -1,4 +1,4 @@
-import { useState, useRef, useContext, useLayoutEffect } from "react";
+import { useState, useRef, useContext, useLayoutEffect, useEffect } from "react";
 import StoreContext from "../store";
 import util from "../util";
 
@@ -13,10 +13,16 @@ export default function Card(props) {
     const canvasRef = useRef(null);
 
     useLayoutEffect(() => {
+        if(props.num == 0) console.log("useLayoutEffect");
         store.canvasRefs.current[props.num] = canvasRef.current;
         canvasRef.current.width = cardRef.current?.clientWidth;
         canvasRef.current.height = cardRef.current?.clientHeight;
     }, []);
+
+    // useEffect(() => {
+    //     if(props.num == 0) console.log("useEffect");
+    //     canvasRef.current = store.canvasRefs.current[props.num];
+    // }, [store.canvasRefs.current[props.num]]);
 
     const handleClick = (e) => {
         const targetEl = e.target;
@@ -40,6 +46,7 @@ export default function Card(props) {
     }
 
     const handleDragStart = (e) => {
+        e.dataTransfer.setData("text/plain", props.num);
     }
 
     const handleDragOver = (e) => {
@@ -47,7 +54,13 @@ export default function Card(props) {
     }
 
     const handleDrop = (e) => {
+        const srcIdx = Number(e.dataTransfer.getData("text/plain"));
+        const destIdx = props.num;
+        if(srcIdx == destIdx)
+            return;
 
+        store.copyCanvas(srcIdx, destIdx);
+        store.clearCanvas(srcIdx);
     }
 
     const handleCopy = async () => {
@@ -85,7 +98,7 @@ export default function Card(props) {
                 const canvas = el.querySelector("canvas");
 
                 if(canvas) {
-                    store.copyCanvas(props.num, Number(canvas.id.replace("card-", "")));
+                    store.copyCanvas(Number(canvas.id.replace("card-", "")), props.num);
                 }
             }
 
@@ -93,13 +106,12 @@ export default function Card(props) {
         }
     }
 
-    let selectedClass = isFocused ? "card-selected" : "";
+    let selectedClass = isFocused ? " card-selected" : "";
 
     return (
-        <div>
         <div
             ref={cardRef}
-            className={`card ${selectedClass}`}
+            className={`card${selectedClass}`}
             tabIndex={0}
             onCopy={handleCopy}
             onPaste={handlePaste}
@@ -108,10 +120,10 @@ export default function Card(props) {
             onContextMenu={handleRightClick}
             onBlur={() => setIsFocused(false)}
             onFocus={() => setIsFocused(true)}
-            // onDragStart={handleDragStart}
-            // onDragOver={handleDragOver}
-            // onDrop={handleDrop}
-            // draggable={true}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            draggable={true}
             style={{
                 border: store.hasCard[props.num] ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)"
             }}
@@ -133,7 +145,6 @@ export default function Card(props) {
                 // width="100%"
                 // height="100%"
             />
-        </div>
         </div>
     );
 }
