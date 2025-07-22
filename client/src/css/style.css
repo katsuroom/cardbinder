@@ -4,6 +4,10 @@ body {
     min-width: fit-content;
 }
 
+img {
+    border: none;
+}
+
 #toolbar {
     padding: 1em;
     background-color: rgb(127, 127, 127);
@@ -12,8 +16,8 @@ body {
 
 .card {
     position: relative;
-    height: 120px;
-    width: calc(120px / 88 * 63);
+    /* height: 120px;
+    width: calc(120px / 88 * 63); */
 }
 
 .loading {
@@ -32,7 +36,7 @@ body {
     background-color: lightblue;
 }
 
-.card-selected canvas {
+.card-selected * {
     opacity: 0.5;
 }
 

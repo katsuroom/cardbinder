@@ -1,27 +1,43 @@
-import { createContext, useReducer, useRef } from "react";
+import { createContext, useReducer } from "react";
 
 const StoreContext = createContext();
 
 const StoreAction = {
-    SET_HAS_CARD: "SET_HAS_CARD"
+    CLEAR_ALL: "CLEAR_ALL",
+    SET_CARD_SRC: "SET_CARD_SRC",
+    SWAP_CARD_SRC: "SWAP_CARD_SRC"
 };
 
 export function StoreContextProvider({children}) {
     const [store, dispatch] = useReducer(storeReducer, {
-        hasCard: new Array(9*48).fill(false),
-        canvasRefs: useRef(new Array(9*48)),
-        copied: null
+        imgSrcs: new Array(9*48).fill(null)
     });
 
     function storeReducer(store, action) {
         const {type, payload} = action;
         switch(type) {
-            case StoreAction.SET_HAS_CARD: {
-                const newHasCard = [...store.hasCard];
-                newHasCard[payload.index] = payload.value;
+            case StoreAction.CLEAR_ALL: {
+                const newCards = new Array(9*48).fill(null);
                 return {
                     ...store,
-                    hasCard: newHasCard
+                    imgSrcs: newCards
+                };
+            }
+            case StoreAction.SET_CARD_SRC: {
+                const newCards = [...store.imgSrcs];
+                newCards[payload.index] = payload.src;
+                return {
+                    ...store,
+                    imgSrcs: newCards
+                };
+            }
+            case StoreAction.SWAP_CARD_SRC: {
+                const newCards = [...store.imgSrcs];
+                newCards[payload.srcIndex] = store.imgSrcs[payload.destIndex];
+                newCards[payload.destIndex] = store.imgSrcs[payload.srcIndex];
+                return {
+                    ...store,
+                    imgSrcs: newCards
                 };
             }
             default:
@@ -29,59 +45,43 @@ export function StoreContextProvider({children}) {
         }
     }
 
-    store.setHasCard = (index, value) => {
+    store.hasCard = (index) => {
+        return store.imgSrcs[index] != null;
+    };
+
+    store.setImgSrc = (index, src) => {
         dispatch({
-            type: StoreAction.SET_HAS_CARD,
-            payload: { index, value }
+            type: StoreAction.SET_CARD_SRC,
+            payload: {index, src}
         });
-    }
+    };
 
-    store.getCanvasElement = (index) => {
-        return store.canvasRefs.current[index];
-    }
+    store.copyImgSrc = (srcIndex, destIndex) => {
+        dispatch({
+            type: StoreAction.SET_CARD_SRC,
+            payload: {index: destIndex, src: store.imgSrcs[srcIndex]}
+        });
+    };
 
-    store.drawCanvas = async (index, base64) => {
+    store.clearSrc = (index) => {
+        dispatch({
+            type: StoreAction.SET_CARD_SRC,
+            payload: {index, src: null}
+        });
+    };
 
-        const canvas = store.getCanvasElement(index);
-        const ctx = canvas.getContext("2d");
+    store.swapSrc = (srcIndex, destIndex) => {
+        dispatch({
+            type: StoreAction.SWAP_CARD_SRC,
+            payload: { srcIndex, destIndex }
+        });
+    };
 
-        const image = new Image();
-        image.src = base64;
-
-        image.onload = () => {
-            const newWidth = canvas.width;
-            const newHeight = (image.height / image.width) * newWidth;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(image, 0, 0, newWidth, newHeight);
-
-            store.setHasCard(index, true);
-        };
-    }
-
-    store.copyCanvas = async (srcIndex, destIndex) => {
-
-        const src = store.getCanvasElement(srcIndex);
-        if(store.hasCard[srcIndex] == false)
-            return;
-
-        const canvas = store.getCanvasElement(destIndex);
-        const ctx = canvas.getContext("2d");
-
-        const newWidth = canvas.width;
-        const newHeight = (src.height / src.width) * newWidth;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(src, 0, 0, newWidth, newHeight);
-        store.setHasCard(destIndex, true);
-    }
-
-    store.clearCanvas = (index) => {
-        const canvas = store.getCanvasElement(index);
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        store.setHasCard(index, false);
-    }
+    store.clearAll = () => {
+        dispatch({
+            type: StoreAction.CLEAR_ALL
+        });
+    };
 
     return (
         <StoreContext.Provider value={{store}}>

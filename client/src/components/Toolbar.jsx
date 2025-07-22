@@ -15,15 +15,24 @@ export default function Toolbar() {
         // let imgs = [];
         const zip = new JSZip();
 
-        // get imgs
-        for(let i = 0; i < store.hasCard.length; ++i) {
-            if(store.hasCard[i] == true) {
+        // add images to zip
+        for(let i = 0; i < store.imgSrcs.length; ++i) {
+            if(store.imgSrcs[i] != null) {
                 const index = i;
-                const canvas = document.getElementById("card-" + index);
+                const parts = store.imgSrcs[i].split(";base64,");
+                const mimeType = parts[0].split(":")[1];
+                const base64 = parts[1];
 
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+                const bytes = atob(base64);
+                const arr = new Array(bytes.length);
+                for(let i = 0; i < arr.length; ++i) {
+                    arr[i] = bytes.charCodeAt(i);
+                }
+                const byteArr = new Uint8Array(arr);
 
-                zip.file("card-" + index + ".png", blob);
+                const blob = new Blob([byteArr], {type: mimeType});
+
+                zip.file(index + ".jpg", blob);
             }
         }
 
@@ -34,7 +43,6 @@ export default function Toolbar() {
         link.download = "binder" + fileExt;
         link.click();
         URL.revokeObjectURL(link.href);
-        link.remove();
     };
 
     const handleImport = () => {
@@ -47,17 +55,20 @@ export default function Toolbar() {
 
         JSZip.loadAsync(zip)
         .then(zip => {
+
+            // clear all
+            store.clearAll();
+
             Object.keys(zip.files).forEach(path => {
                 const file = zip.files[path];
-                const canvasId = path.split(".")[0];
-                const index = Number(canvasId.replace("card-", ""));
+                const index = Number(path.split(".")[0]);
 
                 file.async("blob")
                 .then(blob => {
                     util.blobTobase64(blob)
                     .then(base64 => {
                         // draw to canvas
-                        store.drawCanvas(index, base64);
+                        store.setImgSrc(index, base64);
                     });
                 });
             });

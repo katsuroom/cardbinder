@@ -1,6 +1,9 @@
-import { useState, useRef, useContext, useLayoutEffect, useEffect } from "react";
+import { useState, useContext } from "react";
 import StoreContext from "../store";
 import util from "../util";
+
+const cardHeight = 120;
+const cardWidth = 120 / 88 * 63;
 
 export default function Card(props) {
 
@@ -8,21 +11,6 @@ export default function Card(props) {
 
     const [isFocused, setIsFocused] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    const cardRef = useRef(null);
-    const canvasRef = useRef(null);
-
-    useLayoutEffect(() => {
-        if(props.num == 0) console.log("useLayoutEffect");
-        store.canvasRefs.current[props.num] = canvasRef.current;
-        canvasRef.current.width = cardRef.current?.clientWidth;
-        canvasRef.current.height = cardRef.current?.clientHeight;
-    }, []);
-
-    // useEffect(() => {
-    //     if(props.num == 0) console.log("useEffect");
-    //     canvasRef.current = store.canvasRefs.current[props.num];
-    // }, [store.canvasRefs.current[props.num]]);
 
     const handleClick = (e) => {
         const targetEl = e.target;
@@ -36,12 +24,8 @@ export default function Card(props) {
 
     const handleKeyDown = (e) => {
         if(e.key == "Delete") {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            store.clearSrc(props.num);
             e.target.blur();
-
-            store.setHasCard(props.num, false);
         }
     }
 
@@ -59,14 +43,13 @@ export default function Card(props) {
         if(srcIdx == destIdx)
             return;
 
-        store.copyCanvas(srcIdx, destIdx);
-        store.clearCanvas(srcIdx);
+        store.swapSrc(srcIdx, destIdx);
     }
 
     const handleCopy = async () => {
         navigator.clipboard.write([
             new ClipboardItem({
-                "text/html": new Blob([canvasRef.current.outerHTML], {type: "text/html"})
+                "text/html": new Blob([props.num], {type: "text/html"})
             })
         ]);
     }
@@ -82,27 +65,43 @@ export default function Card(props) {
             // get image mimetype
             const imageType = item.types.find(type => type.startsWith("image/"));
             if(imageType) {
-                // paste image data
+                // load image data
                 const blob = await item.getType(imageType);
-                const base64 = await util.blobTobase64(blob);
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
 
-                store.drawCanvas(props.num, base64);
-            }
-            else if(item.types.includes("text/html")) {
-                // paste from another canvas
-                const blob = await item.getType("text/html");
-                const html = await blob.text();
-                
-                const parser = new DOMParser();
-                const el = parser.parseFromString(html, "text/html");
-                const canvas = el.querySelector("canvas");
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
 
-                if(canvas) {
-                    store.copyCanvas(Number(canvas.id.replace("card-", "")), props.num);
+                        // create canvas for resizing
+                        const canvas = document.createElement("canvas");
+                        const ctx = canvas.getContext("2d");
+
+                        const newWidth = cardWidth;
+                        const newHeight = (img.height / img.width) * newWidth;
+
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+
+                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                        const base64 = canvas.toDataURL("image/jpeg", 0.9);
+                        store.setImgSrc(props.num, base64);
+                        canvas.remove();
+                    }
                 }
             }
+            else if(item.types.includes("text/html")) {
 
-            
+                // paste from another canvas
+                const blob = await item.getType("text/html");
+                const text = await blob.text();
+
+                const srcIndex = Number(text);
+                store.copyImgSrc(srcIndex, props.num);
+            }
         }
     }
 
@@ -110,7 +109,6 @@ export default function Card(props) {
 
     return (
         <div
-            ref={cardRef}
             className={`card${selectedClass}`}
             tabIndex={0}
             onCopy={handleCopy}
@@ -125,7 +123,9 @@ export default function Card(props) {
             onDrop={handleDrop}
             draggable={true}
             style={{
-                border: store.hasCard[props.num] ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)"
+                border: store.hasCard(props.num) ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)",
+                width: cardWidth,
+                height: cardHeight
             }}
         >
             <div className="loading">
@@ -135,15 +135,18 @@ export default function Card(props) {
                 position: "absolute",
                 marginBlock: 0,
                 fontSize: "8pt",
-                color: "white",
+                color: store.hasCard(props.num) ? "white" : "black",
                 bottom: 5,
                 left: 5
             }}>{props.num}</p>
-            <canvas
-                ref={canvasRef}
+            <img
+                style={{
+                    visibility: store.hasCard(props.num) ? "visible" : "hidden"
+                }}
                 id={`card-${props.num}`}
-                // width="100%"
-                // height="100%"
+                width={cardWidth}
+                height={cardHeight}
+                src={store.imgSrcs[props.num]}
             />
         </div>
     );
