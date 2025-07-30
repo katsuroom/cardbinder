@@ -1,43 +1,88 @@
 import { createContext, useReducer } from "react";
+import { LayoutMode, Global } from "./util";
 
 const StoreContext = createContext();
 
 const StoreAction = {
-    CLEAR_ALL: "CLEAR_ALL",
-    SET_CARD_SRC: "SET_CARD_SRC",
-    SWAP_CARD_SRC: "SWAP_CARD_SRC"
+    RESET_BINDER: "RESET_BINDER",
+    SET_LAYOUT: "SET_LAYOUT",
+    SET_CARD: "SET_CARD",
+    DELETE_CARD: "DELETE_CARD",
+    SWAP_CARDS: "SWAP_CARDS",
+    SET_CONTEXT_MENU: "SET_CONTEXT_MENU",
+    DELETE_PAGE: "DELETE_PAGE"
 };
+
+function createCard(src, text) {
+    return {
+        src, text
+    };
+}
 
 export function StoreContextProvider({children}) {
     const [store, dispatch] = useReducer(storeReducer, {
-        imgSrcs: new Array(9*48).fill(null)
+        layout: LayoutMode.BINDER,
+        cards: new Array(Global.defaultBinderSize).fill(null),
+
+        showContextMenu: false,
+        contextMenuIndex: -1
     });
 
     function storeReducer(store, action) {
         const {type, payload} = action;
         switch(type) {
-            case StoreAction.CLEAR_ALL: {
-                const newCards = new Array(9*48).fill(null);
+            case StoreAction.RESET_BINDER: {
+                const newCards = new Array(Global.defaultBinderSize).fill(null);
                 return {
                     ...store,
-                    imgSrcs: newCards
+                    cards: newCards
                 };
             }
-            case StoreAction.SET_CARD_SRC: {
-                const newCards = [...store.imgSrcs];
-                newCards[payload.index] = payload.src;
+            case StoreAction.SET_LAYOUT: {
                 return {
                     ...store,
-                    imgSrcs: newCards
+                    layout: payload.layout
                 };
             }
-            case StoreAction.SWAP_CARD_SRC: {
-                const newCards = [...store.imgSrcs];
-                newCards[payload.srcIndex] = store.imgSrcs[payload.destIndex];
-                newCards[payload.destIndex] = store.imgSrcs[payload.srcIndex];
+            case StoreAction.SET_CARD: {
+                const newCards = [...store.cards];
+                newCards[payload.index] = createCard(payload.src, payload.text);
                 return {
                     ...store,
-                    imgSrcs: newCards
+                    cards: newCards
+                };
+            }
+            case StoreAction.DELETE_CARD: {
+                const newCards = [...store.cards];
+                newCards[payload.index] = null;
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            }
+            case StoreAction.SWAP_CARDS: {
+                const newCards = [...store.cards];
+                newCards[payload.srcIndex] = store.cards[payload.destIndex];
+                newCards[payload.destIndex] = store.cards[payload.srcIndex];
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            }
+            case StoreAction.DELETE_PAGE: {
+                // deletes cards [payload.pageIndex*9 ... payload.pageIndex*9+8]
+                const newCards = [
+                    ...store.cards.slice(0, payload.pageIndex*9),
+                    ...store.cards.slice(payload.pageIndex*9+9)];
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            }
+            case StoreAction.SET_CONTEXT_MENU: {
+                return {
+                    ...store,
+                    contextMenuIndex: payload.index
                 };
             }
             default:
@@ -46,42 +91,81 @@ export function StoreContextProvider({children}) {
     }
 
     store.hasCard = (index) => {
-        return store.imgSrcs[index] != null;
+        return store.cards[index] != null;
     };
 
-    store.setImgSrc = (index, src) => {
+    store.getNumCards = () => {
+        return store.cards.length;
+    };
+
+    store.getCard = (index) => {
+        return store.cards[index];
+    }
+
+    store.getCardSrc = (index) => {
+        return store.cards[index]?.src;
+    };
+
+    store.getCardText = (index) => {
+        return store.cards[index]?.text;
+    }
+
+    store.getLayout = () => {
+        return store.layout;
+    };
+
+    store.setLayout = (layout) => {
         dispatch({
-            type: StoreAction.SET_CARD_SRC,
-            payload: {index, src}
+            type: StoreAction.SET_LAYOUT,
+            payload: {layout}
         });
     };
 
-    store.copyImgSrc = (srcIndex, destIndex) => {
+    store.setCard = (index, src, text) => {
         dispatch({
-            type: StoreAction.SET_CARD_SRC,
-            payload: {index: destIndex, src: store.imgSrcs[srcIndex]}
+            type: StoreAction.SET_CARD,
+            payload: {index, src, text}
+        })
+    }
+
+    store.deleteCard = (index) => {
+        dispatch({
+            type: StoreAction.DELETE_CARD,
+            payload: {index}
         });
     };
 
-    store.clearSrc = (index) => {
+    store.swapCards = (srcIndex, destIndex) => {
         dispatch({
-            type: StoreAction.SET_CARD_SRC,
-            payload: {index, src: null}
-        });
-    };
-
-    store.swapSrc = (srcIndex, destIndex) => {
-        dispatch({
-            type: StoreAction.SWAP_CARD_SRC,
+            type: StoreAction.SWAP_CARDS,
             payload: { srcIndex, destIndex }
         });
     };
 
-    store.clearAll = () => {
+    store.deletePage = (pageIndex) => {
         dispatch({
-            type: StoreAction.CLEAR_ALL
+            type: StoreAction.DELETE_PAGE,
+            payload: {pageIndex}
+        })
+    }
+
+    store.resetBinder = () => {
+        dispatch({
+            type: StoreAction.RESET_BINDER,
+            payload: {}
         });
     };
+
+    store.setContextMenu = (index) => {
+        dispatch({
+            type: StoreAction.SET_CONTEXT_MENU,
+            payload: index
+        })
+    }
+
+    store.hideContextMenu = () => {
+        store.setContextMenu(-1);
+    }
 
     return (
         <StoreContext.Provider value={{store}}>

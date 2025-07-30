@@ -1,9 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useContext } from 'react'
 import '../css/style.css'
 import CardPage from './CardPage';
 import Toolbar from './Toolbar';
 
+import StoreContext from '../store';
+import ContextMenu from './ContextMenu';
+import { Global } from '../util';
+
 export default function App() {
+
+    const { store } = useContext(StoreContext);
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -14,6 +20,8 @@ export default function App() {
         window.addEventListener("beforeunload", handleBeforeUnload);
     }, []);
 
+    const numPages = store.getNumCards() / Global.cardsPerPage;
+    const numPageGroups = Math.ceil(numPages / Global.pagesPerGroup);
 
     return (
         <>
@@ -25,7 +33,7 @@ export default function App() {
             }}
         >
             {
-                Array.from({length: 6}).map((_, i) =>
+                Array.from({length: numPageGroups}).map((_, i) =>
                     <div
                         key={i}
                         className="page-group"
@@ -40,13 +48,14 @@ export default function App() {
                         }}
                     >
                         {
-                            Array.from({length: 8}).map((_, j) =>
-                                <CardPage key={i*8+j} num={i*8+j} />
+                            Array.from({length: Math.min( Global.pagesPerGroup, numPages-(Global.pagesPerGroup*i) )}).map((_, j) =>
+                                <CardPage key={i*Global.pagesPerGroup+j} num={i*Global.pagesPerGroup+j} />
                             )
                         }
                     </div>
                 )
             }
+            <ContextMenu />
         </div>
         </>
     )

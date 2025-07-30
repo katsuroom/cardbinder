@@ -1,4 +1,15 @@
-function blobTobase64(blob) {
+export const Global = {
+    cardsPerPage: 9,
+    pagesPerGroup: 8,
+    defaultBinderSize: 9*48
+};
+
+export const LayoutMode = {
+    BINDER: "BINDER",
+    GALLERY: "GALLERY"
+};
+
+export function blobTobase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -8,7 +19,3 @@ function blobTobase64(blob) {
         reader.readAsDataURL(blob);
     });
 }
-
-export default {
-    blobTobase64
-};

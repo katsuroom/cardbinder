@@ -1,6 +1,5 @@
 import { useState, useContext } from "react";
 import StoreContext from "../store";
-import util from "../util";
 
 const cardHeight = 120;
 const cardWidth = 120 / 88 * 63;
@@ -10,7 +9,16 @@ export default function Card(props) {
     const { store } = useContext(StoreContext);
 
     const [isFocused, setIsFocused] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+
+    const handleFocus = (e) => {
+        e.stopPropagation();
+        setIsFocused(true);
+    }
+
+    const handleUnfocus = (e) => {
+        store.hideContextMenu();
+        setIsFocused(false);
+    }
 
     const handleClick = (e) => {
         const targetEl = e.target;
@@ -20,11 +28,13 @@ export default function Card(props) {
     }
 
     const handleRightClick = (e) => {
+        e.preventDefault();
+        store.setContextMenu(props.num);
     }
 
     const handleKeyDown = (e) => {
         if(e.key == "Delete") {
-            store.clearSrc(props.num);
+            store.deleteCard(props.num);
             e.target.blur();
         }
     }
@@ -43,21 +53,28 @@ export default function Card(props) {
         if(srcIdx == destIdx)
             return;
 
-        store.swapSrc(srcIdx, destIdx);
+        store.swapCards(srcIdx, destIdx);
     }
 
-    const handleCopy = async () => {
+    const handleCopy = () => {
+        const cards = [];
+        cards.push(store.getCard(props.num));
+
         navigator.clipboard.write([
             new ClipboardItem({
-                "text/html": new Blob([props.num], {type: "text/html"})
+                "text/plain": new Blob([JSON.stringify(cards)], {type: "text/plain"})
             })
         ]);
     }
 
+    const handleCut = () => {
+        handleCopy();
+        store.deleteCard(props.num);
+    }
+
     const handlePaste = async (e) => {
 
-        if(!isFocused) return;
-
+        e.target.blur();
         const items = await navigator.clipboard.read();
 
         for(const item of items) {
@@ -88,19 +105,25 @@ export default function Card(props) {
                         ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
                         const base64 = canvas.toDataURL("image/jpeg", 0.9);
-                        store.setImgSrc(props.num, base64);
+                        store.setCard(props.num, base64, "");
                         canvas.remove();
                     }
                 }
             }
-            else if(item.types.includes("text/html")) {
+            else if(item.types.includes("text/plain")) {
 
                 // paste from another canvas
-                const blob = await item.getType("text/html");
+                const blob = await item.getType("text/plain");
                 const text = await blob.text();
 
-                const srcIndex = Number(text);
-                store.copyImgSrc(srcIndex, props.num);
+                try {
+                    const cards = JSON.parse(text);
+                    if(cards.length == 1) {
+                        const card = cards[0];
+                        store.setCard(props.num, card.src, card.text);
+                    }
+                }
+                catch(err) {}
             }
         }
     }
@@ -108,46 +131,56 @@ export default function Card(props) {
     let selectedClass = isFocused ? " card-selected" : "";
 
     return (
-        <div
-            className={`card${selectedClass}`}
-            tabIndex={0}
-            onCopy={handleCopy}
-            onPaste={handlePaste}
-            onKeyDown={handleKeyDown}
-            onClick={handleClick}
-            onContextMenu={handleRightClick}
-            onBlur={() => setIsFocused(false)}
-            onFocus={() => setIsFocused(true)}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            draggable={true}
-            style={{
-                border: store.hasCard(props.num) ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)",
-                width: cardWidth,
-                height: cardHeight
-            }}
-        >
-            <div className="loading">
-                {isLoading && <p>Loading...</p>}
-            </div>
-            <p style={{
-                position: "absolute",
-                marginBlock: 0,
-                fontSize: "8pt",
-                color: store.hasCard(props.num) ? "white" : "black",
-                bottom: 5,
-                left: 5
-            }}>{props.num}</p>
-            <img
+        <div>
+            <div
+                className={`card${selectedClass}`}
+                tabIndex={0}
+                onCopy={handleCopy}
+                onCut={handleCut}
+                onPaste={handlePaste}
+                onKeyDown={handleKeyDown}
+                onClick={handleClick}
+                onContextMenu={handleRightClick}
+                onBlur={handleUnfocus}
+                onFocus={handleFocus}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                draggable={true}
                 style={{
-                    visibility: store.hasCard(props.num) ? "visible" : "hidden"
+                    border: store.hasCard(props.num) ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)",
+                    width: cardWidth,
+                    height: cardHeight
                 }}
-                id={`card-${props.num}`}
-                width={cardWidth}
-                height={cardHeight}
-                src={store.imgSrcs[props.num]}
-            />
+            >
+                <p style={{
+                    position: "absolute",
+                    marginBlock: 0,
+                    fontSize: "8pt",
+                    color: store.hasCard(props.num) ? "white" : "black",
+                    bottom: 5,
+                    left: 5
+                }}>{props.num}</p>
+                <img
+                    style={{
+                        visibility: store.hasCard(props.num) ? "visible" : "hidden"
+                    }}
+                    id={`card-${props.num}`}
+                    width={cardWidth}
+                    height={cardHeight}
+                    src={store.getCardSrc(props.num)}
+                />
+            </div>
+            {/* <p
+                style={{
+                    color: "white",
+                    fontSize: "8pt",
+                    marginBlock: 0,
+                    marginTop: "0.5em"
+                }}
+            >
+                Name
+            </p> */}
         </div>
     );
 }

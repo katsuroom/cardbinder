@@ -1,16 +1,84 @@
+import { useState, useContext } from "react";
 import Card from "./Card";
 
+import StoreContext from "../store";
+import { Global } from "../util";
+
 export default function CardPage(props) {
+
+    const { store } = useContext(StoreContext);
+
+    const [isFocused, setIsFocused] = useState(false);
+
+    const selectedClass = isFocused ? " card-page-selected" : "";
+
+    const handleKeyDown = (e) => {
+        if(!isFocused)
+            return;
+
+        if(e.key == "Delete") {
+            store.deletePage(props.num);
+            e.target.blur();
+        }
+    };
+
+    const handleCopy = () => {
+        if(!isFocused)
+            return;
+
+        const cards = [];
+        for(let i = props.num*9; i < props.num*9+9; ++i) {
+            cards.push(store.getCard(i));
+        }
+
+        navigator.clipboard.write([
+            new ClipboardItem({
+                "text/plain": new Blob([JSON.stringify(cards)], {type: "text/plain"})
+            })
+        ]);
+    };
+
+    const handlePaste = async (e) => {
+        if(!isFocused)
+            return;
+
+        e.target.blur();
+        const items = await navigator.clipboard.read();
+
+        for(const item of items) {
+            if(item.types.includes("text/plain")) {
+                // paste up to 9 cards
+                const blob = await item.getType("text/plain");
+                const text = await blob.text();
+
+                try {
+                    const cards = JSON.parse(text);
+                    for(let i = 0; i < Math.min(cards.length, 9); ++i) {
+                        const card = cards[i];
+                        store.setCard(props.num*9+i, card.src, card.text);
+                    }
+                }
+                catch(err) {}
+            }
+        }
+    };
+
     return (
         <div
-            className="card-page"
+            className={`card-page${selectedClass}`}
+            onKeyDown={handleKeyDown}
+            onCopy={handleCopy}
+            onPaste={handlePaste}
+            onBlur={() => setIsFocused(false)}
+            onFocus={() => setIsFocused(true)}
+            tabIndex={0}
         >
             <div style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr 1fr",
                 gap: "0.5em"
             }}>
-                {Array.from({length: 9}).map((_, i) => <Card key={i} num={props.num*9 + i}/>)}
+                {Array.from({length: Global.cardsPerPage}).map((_, i) => <Card key={i} num={props.num*Global.cardsPerPage + i}/>)}
             </div>
             <div style={{
                 color: "white"
