@@ -148,7 +148,7 @@ export default function Card(props) {
                 onDrop={handleDrop}
                 draggable={true}
                 style={{
-                    border: store.hasCard(props.num) ? "2px solid rgb(63, 63, 63)" : "2px solid rgb(127, 127, 127)",
+                    border: store.hasCard(props.num) ? "2px solid transparent" : "2px solid rgb(127, 127, 127)",
                     width: cardWidth,
                     height: cardHeight
                 }}

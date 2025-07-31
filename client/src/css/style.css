@@ -14,17 +14,6 @@ img {
     color: white;
 }
 
-#context-menu {
-    visibility: hidden;
-    position: absolute;
-    background-color: rgb(95, 95, 95);
-    left: 0;
-    top: 0;
-    padding: 1em;
-    border: 2px solid white;
-    border-radius: 0.5em;
-}
-
 .card {
     position: relative;
 }
@@ -38,6 +27,7 @@ img {
 }
 
 .card-page {
+    position: relative;
     width: fit-content;
     background-color: rgb(63, 63, 63);
     padding: 1em;
@@ -46,6 +36,44 @@ img {
 
 .card-page-selected {
     background-color: rgb(95, 95, 95);
+}
+
+.dropdown-button {
+    border: 1px solid white;
+    color: white;
+    background-color: transparent;
+    margin: 0.5em;
+    margin-bottom: 0;
+    margin-right: 0;
+    border-radius: 0.25em;
+    display: flex;
+    align-items: center;
+    height: 2rem;
+}
+
+.dropdown-button:hover {
+    background-color: rgb(31, 31, 31);
+    cursor: pointer;
+}
+
+.context-menu {
+    position: absolute;
+    background-color: white;
+    color: rgb(31, 31, 31);
+    font-size: 11pt;
+    right: -9em;
+    bottom: 4em;
+    border-radius: 0.25em;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.menu-option {
+    padding: 0.75em;
+}
+
+.menu-option:hover {
+    background-color: lightgray;
 }
 
 @media print {

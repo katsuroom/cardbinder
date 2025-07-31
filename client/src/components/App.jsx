@@ -1,10 +1,11 @@
 import { useEffect, useContext } from 'react'
-import '../css/style.css'
+import "../css/style.css";
+import "../css/fontawesome/css/fontawesome.min.css";
+import "../css/fontawesome/css/solid.min.css";
 import CardPage from './CardPage';
 import Toolbar from './Toolbar';
 
 import StoreContext from '../store';
-import ContextMenu from './ContextMenu';
 import { Global } from '../util';
 
 export default function App() {
@@ -55,7 +56,6 @@ export default function App() {
                     </div>
                 )
             }
-            <ContextMenu />
         </div>
         </>
     )

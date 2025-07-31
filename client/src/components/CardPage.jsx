@@ -1,5 +1,6 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import Card from "./Card";
+import ContextMenu from './ContextMenu';
 
 import StoreContext from "../store";
 import { Global } from "../util";
@@ -9,6 +10,10 @@ export default function CardPage(props) {
     const { store } = useContext(StoreContext);
 
     const [isFocused, setIsFocused] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+
+    const menuButtonRef = useRef(null);
+    const menuRef = useRef(null);
 
     const selectedClass = isFocused ? " card-page-selected" : "";
 
@@ -21,6 +26,16 @@ export default function CardPage(props) {
             e.target.blur();
         }
     };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+    };
+
+    const handleBlurMenu = (e) => {
+        if(e.relatedTarget != menuRef.current)
+            setShowMenu(false);
+    };
+
 
     const handleCopy = () => {
         if(!isFocused)
@@ -63,13 +78,17 @@ export default function CardPage(props) {
         }
     };
 
+    const handleDropdown = () => {
+        setShowMenu(!showMenu);
+    };
+
     return (
         <div
             className={`card-page${selectedClass}`}
             onKeyDown={handleKeyDown}
             onCopy={handleCopy}
             onPaste={handlePaste}
-            onBlur={() => setIsFocused(false)}
+            onBlur={handleBlur}
             onFocus={() => setIsFocused(true)}
             tabIndex={0}
         >
@@ -81,11 +100,27 @@ export default function CardPage(props) {
                 {Array.from({length: Global.cardsPerPage}).map((_, i) => <Card key={i} num={props.num*Global.cardsPerPage + i}/>)}
             </div>
             <div style={{
-                color: "white"
+                color: "white",
+                display: "flex",
+                justifyContent: "space-between"
             }}>
                 <p style={{
                     marginBlockEnd: 0
                 }}>{props.num}</p>
+                <button
+                    ref={menuButtonRef}
+                    className="dropdown-button"
+                    onClick={handleDropdown}
+                    onFocus={(e) => e.stopPropagation()}
+                    onBlur={handleBlurMenu}
+                >
+                    <span className="fa-solid fa-ellipsis-vertical" />
+                </button>
+                {
+                    showMenu ? 
+                    <ContextMenu ref={menuRef} num={props.num} buttonRef={menuButtonRef} setShowMenu={setShowMenu}/>
+                    : null
+                }
             </div>
         </div>
     );

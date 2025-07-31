@@ -9,8 +9,9 @@ const StoreAction = {
     SET_CARD: "SET_CARD",
     DELETE_CARD: "DELETE_CARD",
     SWAP_CARDS: "SWAP_CARDS",
-    SET_CONTEXT_MENU: "SET_CONTEXT_MENU",
-    DELETE_PAGE: "DELETE_PAGE"
+
+    DELETE_PAGE: "DELETE_PAGE",
+    INSERT_PAGE: "INSERT_PAGE",
 };
 
 function createCard(src, text) {
@@ -79,10 +80,17 @@ export function StoreContextProvider({children}) {
                     cards: newCards
                 };
             }
-            case StoreAction.SET_CONTEXT_MENU: {
+            case StoreAction.INSERT_PAGE: {
+                // add i*9 - (i+1)*9
+                const newPage = new Array(Global.cardsPerPage).fill(null);
+                const newCards = [
+                    ...store.cards.slice(0, payload.pageIndex*9),
+                    ...newPage,
+                    ...store.cards.slice(payload.pageIndex*9)
+                ];
                 return {
                     ...store,
-                    contextMenuIndex: payload.index
+                    cards: newCards
                 };
             }
             default:
@@ -147,7 +155,14 @@ export function StoreContextProvider({children}) {
             type: StoreAction.DELETE_PAGE,
             payload: {pageIndex}
         })
-    }
+    };
+
+    store.insertPage = (pageIndex) => {
+        dispatch({
+            type: StoreAction.INSERT_PAGE,
+            payload: {pageIndex}
+        })
+    };
 
     store.resetBinder = () => {
         dispatch({
@@ -155,17 +170,6 @@ export function StoreContextProvider({children}) {
             payload: {}
         });
     };
-
-    store.setContextMenu = (index) => {
-        dispatch({
-            type: StoreAction.SET_CONTEXT_MENU,
-            payload: index
-        })
-    }
-
-    store.hideContextMenu = () => {
-        store.setContextMenu(-1);
-    }
 
     return (
         <StoreContext.Provider value={{store}}>
