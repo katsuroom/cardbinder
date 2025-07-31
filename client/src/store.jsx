@@ -4,50 +4,48 @@ import { LayoutMode, Global } from "./util";
 const StoreContext = createContext();
 
 const StoreAction = {
-    RESET_BINDER: "RESET_BINDER",
-    SET_LAYOUT: "SET_LAYOUT",
+    NEW_BINDER: "NEW_BINDER",
+    NEW_GALLERY: "NEW_GALLERY",
+
     SET_CARD: "SET_CARD",
     DELETE_CARD: "DELETE_CARD",
     SWAP_CARDS: "SWAP_CARDS",
 
     DELETE_PAGE: "DELETE_PAGE",
     INSERT_PAGE: "INSERT_PAGE",
-};
 
-function createCard(src, text) {
-    return {
-        src, text
-    };
-}
+    IMPORT_BINDER: "IMPORT_BINDER",
+    IMPORT_GALLERY: "IMPORT_GALLERY"
+};
 
 export function StoreContextProvider({children}) {
     const [store, dispatch] = useReducer(storeReducer, {
         layout: LayoutMode.BINDER,
         cards: new Array(Global.defaultBinderSize).fill(null),
-
-        showContextMenu: false,
-        contextMenuIndex: -1
     });
 
     function storeReducer(store, action) {
         const {type, payload} = action;
         switch(type) {
-            case StoreAction.RESET_BINDER: {
+            case StoreAction.NEW_BINDER: {
                 const newCards = new Array(Global.defaultBinderSize).fill(null);
                 return {
                     ...store,
+                    layout: LayoutMode.BINDER,
                     cards: newCards
                 };
             }
-            case StoreAction.SET_LAYOUT: {
+            case StoreAction.NEW_GALLERY: {
+                const newCards = new Array(Global.defaultGallerySize).fill(null);
                 return {
                     ...store,
-                    layout: payload.layout
+                    layout: LayoutMode.GALLERY,
+                    cards: newCards
                 };
-            }
+            };
             case StoreAction.SET_CARD: {
                 const newCards = [...store.cards];
-                newCards[payload.index] = createCard(payload.src, payload.text);
+                newCards[payload.index] = store.createCard(payload.src, payload.text);
                 return {
                     ...store,
                     cards: newCards
@@ -93,10 +91,30 @@ export function StoreContextProvider({children}) {
                     cards: newCards
                 };
             }
+            case StoreAction.IMPORT_BINDER: {
+                return {
+                    ...store,
+                    layout: LayoutMode.BINDER,
+                    cards: payload.cards
+                };
+            }
+            case StoreAction.IMPORT_GALLERY: {
+                return {
+                    ...store,
+                    layout: LayoutMode.GALLERY,
+                    cards: payload.cards
+                };
+            };
             default:
                 return;
         }
     }
+
+    store.createCard = (src, text) => {
+        return {
+            src, text
+        };
+    };
 
     store.hasCard = (index) => {
         return store.cards[index] != null;
@@ -120,13 +138,6 @@ export function StoreContextProvider({children}) {
 
     store.getLayout = () => {
         return store.layout;
-    };
-
-    store.setLayout = (layout) => {
-        dispatch({
-            type: StoreAction.SET_LAYOUT,
-            payload: {layout}
-        });
     };
 
     store.setCard = (index, src, text) => {
@@ -164,10 +175,31 @@ export function StoreContextProvider({children}) {
         })
     };
 
-    store.resetBinder = () => {
+    store.newBinder = () => {
         dispatch({
-            type: StoreAction.RESET_BINDER,
+            type: StoreAction.NEW_BINDER,
             payload: {}
+        });
+    };
+
+    store.newGallery = () => {
+        dispatch({
+            type: StoreAction.NEW_GALLERY,
+            payload: {}
+        });
+    };
+
+    store.importBinder = (cards) => {
+        dispatch({
+            type: StoreAction.IMPORT_BINDER,
+            payload: {cards}
+        });
+    };
+
+    store.importGallery = (cards) => {
+        dispatch({
+            type: StoreAction.IMPORT_GALLERY,
+            payload: {cards}
         });
     };
 

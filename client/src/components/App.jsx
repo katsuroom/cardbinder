@@ -6,7 +6,7 @@ import CardPage from './CardPage';
 import Toolbar from './Toolbar';
 
 import StoreContext from '../store';
-import { Global } from '../util';
+import { Global, LayoutMode } from '../util';
 
 export default function App() {
 
@@ -24,16 +24,9 @@ export default function App() {
     const numPages = store.getNumCards() / Global.cardsPerPage;
     const numPageGroups = Math.ceil(numPages / Global.pagesPerGroup);
 
-    return (
-        <>
-        <Toolbar />
-        <div
-            style={{
-                backgroundColor: "rgb(31, 31, 31)",
-                minWidth: "fit-content"
-            }}
-        >
-            {
+    function getView() {
+        if(store.getLayout() == LayoutMode.BINDER) {
+            return (
                 Array.from({length: numPageGroups}).map((_, i) =>
                     <div
                         key={i}
@@ -55,7 +48,42 @@ export default function App() {
                         }
                     </div>
                 )
-            }
+            )
+        }
+        else if(store.getLayout() == LayoutMode.GALLERY) {
+            return (
+                <div
+                    className="page-group"
+                    style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.5em",
+                        padding: "1em",
+                        paddingTop: "3em",
+                        paddingBottom: "3em",
+                        width: "fit-content"
+                    }}
+                >
+                    {
+                        Array.from({length: numPages}).map((_, i) =>
+                            <CardPage key={i} num={i} />
+                        )
+                    }
+                </div>
+            )
+        }
+    };
+
+    return (
+        <>
+        <Toolbar />
+        <div
+            style={{
+                backgroundColor: "rgb(31, 31, 31)",
+                minWidth: "fit-content"
+            }}
+        >
+            {getView()}
         </div>
         </>
     )

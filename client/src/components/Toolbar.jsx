@@ -2,7 +2,7 @@ import { useContext } from "react";
 import JSZip from "jszip";
 
 import StoreContext from "../store";
-import { blobTobase64 } from "../util";
+import { blobTobase64, Global, LayoutMode } from "../util";
 
 export default function Toolbar() {
 
@@ -10,11 +10,17 @@ export default function Toolbar() {
 
     const fileExt = ".binder";
 
-    const handleNew = () => {
+    const handleNewBinder = () => {
         if(confirm("Create new binder?")) {
-            store.resetBinder();
+            store.newBinder();
         }
-    }
+    };
+
+    const handleNewGallery = () => {
+        if(confirm("Create new gallery?")) {
+            store.newGallery();
+        }
+    };
 
     const handleExport = async () => {
 
@@ -79,8 +85,6 @@ export default function Toolbar() {
 
         const zip = await JSZip.loadAsync(file);
 
-        store.resetBinder();
-
         const configFile = zip.files["config.json"];
         if(configFile) {
             // new import
@@ -90,7 +94,7 @@ export default function Toolbar() {
             const config = JSON.parse(text);
             const layout = config.layout;
 
-            store.setLayout(layout);
+            const cards = new Array(config.cards.length).fill(null);
 
             for(let i = 0; i < config.cards.length; ++i) {
                 if(config.cards[i] == null)
@@ -103,30 +107,41 @@ export default function Toolbar() {
 
                 const cardBlob = await cardFile.async("blob");
                 const base64 = await blobTobase64(cardBlob);
-                store.setCard(i, base64, cardText);
+                cards[i] = store.createCard(base64, cardText);
             }
+
+            if(layout == LayoutMode.BINDER)
+                store.importBinder(cards);
+            else if(layout == LayoutMode.GALLERY)
+                store.importGallery(cards);
         }
         else {
             // old import
-            Object.keys(zip.files).forEach((path) => {
+            const cards = new Array(Global.defaultBinderSize).fill(null);
+
+            for(const path of Object.keys(zip.files)) {
                 const file = zip.files[path];
                 const index = Number(path.split(".")[0]);
 
-                file.async("blob")
-                .then(blob => {
-                    blobTobase64(blob)
-                    .then(base64 => {
-                        // draw to canvas
-                        store.setCard(index, base64, "");
-                    });
-                });
-            });
+                const blob = await file.async("blob");
+                const base64 = await blobTobase64(blob);
+
+                cards[index] = store.createCard(base64, "");
+            }
+            
+            store.importBinder(cards);
         }
     }
 
     return (
         <div id="toolbar">
-            <h2>cardbinder</h2>
+            {
+                store.getLayout() == LayoutMode.BINDER ?
+                    <h2>card<span style={{color: "deepskyblue"}}>binder</span></h2>
+                    :
+                    <h2>card<span style={{color: "violet"}}>gallery</span></h2>
+            }
+            
             <div style={{display: "flex", gap: "1em"}}>
             
             <input
@@ -136,7 +151,8 @@ export default function Toolbar() {
                 accept={fileExt}
                 onChange={handleChange}
             />
-            <button onClick={handleNew}>New Binder</button>
+            <button onClick={handleNewBinder}>New Binder</button>
+            <button onClick={handleNewGallery}>New Gallery</button>
             <button onClick={handleImport}>Import Binder</button>
             <button onClick={handleExport}>Export Binder</button>
             </div>

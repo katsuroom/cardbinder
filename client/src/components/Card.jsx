@@ -1,8 +1,6 @@
 import { useState, useContext } from "react";
 import StoreContext from "../store";
-
-const cardHeight = 120;
-const cardWidth = 120 / 88 * 63;
+import { BinderLayoutConfig, GalleryLayoutConfig, LayoutMode } from "../util";
 
 export default function Card(props) {
 
@@ -10,13 +8,19 @@ export default function Card(props) {
 
     const [isFocused, setIsFocused] = useState(false);
 
+    const layoutConfig = store.getLayout() == LayoutMode.BINDER ?
+        BinderLayoutConfig :
+        GalleryLayoutConfig;
+
+    const cardHeight = layoutConfig.cardHeight;
+    const cardWidth = cardHeight / 88 * 63;
+
     const handleFocus = (e) => {
         e.stopPropagation();
         setIsFocused(true);
     }
 
     const handleUnfocus = (e) => {
-        store.hideContextMenu();
         setIsFocused(false);
     }
 
@@ -29,7 +33,6 @@ export default function Card(props) {
 
     const handleRightClick = (e) => {
         e.preventDefault();
-        store.setContextMenu(props.num);
     }
 
     const handleKeyDown = (e) => {
@@ -99,10 +102,12 @@ export default function Card(props) {
                         const newWidth = cardWidth;
                         const newHeight = (img.height / img.width) * newWidth;
 
-                        canvas.width = newWidth;
-                        canvas.height = newHeight;
+                        const qualityFactor = 1.5;
 
-                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                        canvas.width = newWidth*qualityFactor;
+                        canvas.height = newHeight*qualityFactor;
+
+                        ctx.drawImage(img, 0, 0, newWidth*qualityFactor, newHeight*qualityFactor);
 
                         const base64 = canvas.toDataURL("image/jpeg", 0.9);
                         store.setCard(props.num, base64, "");
@@ -125,6 +130,16 @@ export default function Card(props) {
                 }
                 catch(err) {}
             }
+        }
+    }
+
+    function getText() {
+        const text = store.getCardText(props.num);
+        if(text == null || text == "") {
+            return "(none)";
+        }
+        else {
+            return text;
         }
     }
 
@@ -171,16 +186,17 @@ export default function Card(props) {
                     src={store.getCardSrc(props.num)}
                 />
             </div>
-            {/* <p
+            <p
                 style={{
+                    display: layoutConfig.showText ? "inline" : "none",
                     color: "white",
                     fontSize: "8pt",
                     marginBlock: 0,
                     marginTop: "0.5em"
                 }}
             >
-                Name
-            </p> */}
+                {getText()}
+            </p>
         </div>
     );
 }
