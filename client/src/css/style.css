@@ -33,6 +33,7 @@ canvas {
 .card-page {
     position: relative;
     width: fit-content;
+    font-family: "Calibri";
     background-color: rgb(63, 63, 63);
     padding: 1em;
     user-select: none;  /* disable text selection */
@@ -70,6 +71,12 @@ canvas {
     border-radius: 0.25em;
     z-index: 1;
     overflow: hidden;
+}
+
+.context-menu hr {
+    margin: 0;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
 }
 
 .menu-option {

@@ -1,4 +1,4 @@
-import { useState, useContext, useRef, useEffect } from "react";
+import { useState, useContext, useRef } from "react";
 import Card from "./Card";
 import ContextMenu from './ContextMenu';
 
@@ -11,9 +11,12 @@ export default function CardPage(props) {
 
     const [isFocused, setIsFocused] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const [isEditMode, setEditMode] = useState(false);
+    const [pageText, setPageText] = useState(store.getPageText(props.num) || "");
 
     const menuButtonRef = useRef(null);
     const menuRef = useRef(null);
+    const textRef = useRef(null);
 
     const selectedClass = isFocused ? " card-page-selected" : "";
 
@@ -70,16 +73,58 @@ export default function CardPage(props) {
                     const cards = JSON.parse(text);
                     for(let i = 0; i < Math.min(cards.length, 9); ++i) {
                         const card = cards[i];
+                        if(card == null)
+                            continue;
+                        
                         store.setCard(props.num*9+i, card.src, card.text);
                     }
                 }
-                catch(err) {}
+                catch(err) {
+                    console.log(err);
+                }
             }
         }
     };
 
     const handleDropdown = () => {
         setShowMenu(!showMenu);
+    };
+
+    const handleDoubleClick = () => {
+        setEditMode(true);
+    };
+
+    const handleTextBlur = (e) => {
+        if(!isEditMode)
+            return;
+
+        if(e.relatedTarget == textRef.current)
+            return;
+
+        endEditMode();
+    }
+
+    const endEditMode = () => {
+
+        const text = pageText.trim();
+
+        if(!store.getPageText(props.num) && text == "") {
+            setEditMode(false);
+            return;
+        }
+
+        setEditMode(false);
+        setPageText(text);
+        store.setPageText(props.num, text);
+    };
+
+    function getText() {
+        const text = store.getPageText(props.num);
+        if(text == null || text == "") {
+            return props.num;
+        }
+        else
+            return text;
     };
 
     return (
@@ -102,11 +147,37 @@ export default function CardPage(props) {
             <div style={{
                 color: "white",
                 display: "flex",
-                justifyContent: "space-between"
+                justifyContent: "space-between",
+                gap: "1em"
             }}>
-                <p style={{
-                    marginBlockEnd: 0
-                }}>{props.num}</p>
+                <p
+                    style={{
+                        marginBlockEnd: 0,
+                        whiteSpace: "pre-line",
+                        fontSize: "10pt",
+                        lineHeight: 1.5,
+                        width: "100%"
+                    }}
+                    onFocus={(e) => e.stopPropagation()}
+                    onBlur={handleTextBlur}
+                    onDoubleClick={handleDoubleClick}
+                    tabIndex={0}
+                >
+                    {
+                        isEditMode ? 
+                        <textarea rows="3"
+                            style={{
+                                resize: "none",
+                                width: "100%"
+                            }}
+                            ref={textRef}
+                            value={pageText}
+                            onBlur={handleTextBlur}
+                            onChange={(e) => setPageText(e.target.value)}
+                        />
+                        : getText()
+                    }
+                </p>
                 <button
                     ref={menuButtonRef}
                     className="dropdown-button"

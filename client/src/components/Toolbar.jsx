@@ -32,32 +32,41 @@ export default function Toolbar() {
         // add images to zip
         for(let i = 0; i < store.getNumCards(); ++i) {
             if(store.hasCard(i) == true) {
-                const parts = store.getCardSrc(i).split(";base64,");
-                const mimeType = parts[0].split(":")[1];
-                const base64 = parts[1];
+                if(store.getCardSrc(i) != null) {
+                    const parts = store.getCardSrc(i).split(";base64,");
+                    const mimeType = parts[0].split(":")[1];
+                    const base64 = parts[1];
 
-                const bytes = atob(base64);
-                const arr = new Array(bytes.length);
-                for(let j = 0; j < arr.length; ++j) {
-                    arr[j] = bytes.charCodeAt(j);
+                    const bytes = atob(base64);
+                    const arr = new Array(bytes.length);
+                    for(let j = 0; j < arr.length; ++j) {
+                        arr[j] = bytes.charCodeAt(j);
+                    }
+                    const byteArr = new Uint8Array(arr);
+
+                    const blob = new Blob([byteArr], {type: mimeType});
+
+                    const filename = i + ".jpg";
+                    cards[i] = {
+                        filename,
+                        text: store.getCardText(i)
+                    };
+
+                    zip.file(filename, blob);
                 }
-                const byteArr = new Uint8Array(arr);
-
-                const blob = new Blob([byteArr], {type: mimeType});
-
-                const filename = i + ".jpg";
-                cards[i] = {
-                    filename,
-                    text: store.getCardText(i)
-                };
-
-                zip.file(filename, blob);
+                else {
+                    cards[i] = {
+                        filename: null,
+                        text: store.getCardText(i)
+                    };
+                }
             }
         }
 
         const config = {
             layout: store.getLayout(),
-            cards: cards
+            pages: store.pages,
+            cards: cards,
         };
 
         // add json to zip
@@ -93,6 +102,7 @@ export default function Toolbar() {
 
             const config = JSON.parse(text);
             const layout = config.layout;
+            const pages = config.pages;
 
             const cards = new Array(config.cards.length).fill(null);
 
@@ -100,20 +110,25 @@ export default function Toolbar() {
                 if(config.cards[i] == null)
                     continue;
 
-                const cardText = config.cards[i].cardText;
+                const cardText = config.cards[i].text;
                 const cardFilename = config.cards[i].filename;
 
-                const cardFile = zip.files[cardFilename];
+                if(cardFilename != null) {
+                    const cardFile = zip.files[cardFilename];
 
-                const cardBlob = await cardFile.async("blob");
-                const base64 = await blobTobase64(cardBlob);
-                cards[i] = store.createCard(base64, cardText);
+                    const cardBlob = await cardFile.async("blob");
+                    const base64 = await blobTobase64(cardBlob);
+                    cards[i] = store.createCard(base64, cardText);
+                }
+                else {
+                    cards[i] = store.createCard(null, cardText);
+                }
             }
 
             if(layout == LayoutMode.BINDER)
-                store.importBinder(cards);
+                store.importBinder(cards, pages);
             else if(layout == LayoutMode.GALLERY)
-                store.importGallery(cards);
+                store.importGallery(cards, pages);
         }
         else {
             // old import
@@ -129,7 +144,7 @@ export default function Toolbar() {
                 cards[index] = store.createCard(base64, "");
             }
             
-            store.importBinder(cards);
+            store.importBinder(cards, null);
         }
     }
 
@@ -150,6 +165,7 @@ export default function Toolbar() {
                 id="file-selector"
                 accept={fileExt}
                 onChange={handleChange}
+                onClick={(e) => e.target.value = null}
             />
             <button onClick={handleNewBinder}>New Binder</button>
             <button onClick={handleNewGallery}>New Gallery</button>

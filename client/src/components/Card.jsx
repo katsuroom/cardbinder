@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import StoreContext from "../store";
 import { BinderLayoutConfig, GalleryLayoutConfig, LayoutMode } from "../util";
 
@@ -7,6 +7,18 @@ export default function Card(props) {
     const { store } = useContext(StoreContext);
 
     const [isFocused, setIsFocused] = useState(false);
+    const [isEditMode, setEditMode] = useState(false);
+    const [cardText, setCardText] = useState(store.getCardText(props.num) || "");
+
+    const textRef = useRef(null);
+
+    useEffect(() => {
+        const text = store.getCardText(props.num);
+        if(text)
+            setCardText(text);
+        else
+            setCardText("");
+    }, [store.getCardText(props.num)]);
 
     const layoutConfig = store.getLayout() == LayoutMode.BINDER ?
         BinderLayoutConfig :
@@ -18,37 +30,33 @@ export default function Card(props) {
     const handleFocus = (e) => {
         e.stopPropagation();
         setIsFocused(true);
-    }
+    };
 
     const handleUnfocus = (e) => {
         setIsFocused(false);
-    }
+    };
 
     const handleClick = (e) => {
         const targetEl = e.target;
         if(targetEl.tagName == "IMG") {
             targetEl.parentElement.focus();
         }
-    }
-
-    const handleRightClick = (e) => {
-        e.preventDefault();
-    }
+    };
 
     const handleKeyDown = (e) => {
         if(e.key == "Delete") {
             store.deleteCard(props.num);
             e.target.blur();
         }
-    }
+    };
 
     const handleDragStart = (e) => {
         e.dataTransfer.setData("text/plain", props.num);
-    }
+    };
 
     const handleDragOver = (e) => {
         e.preventDefault();
-    }
+    };
 
     const handleDrop = (e) => {
         const srcIdx = Number(e.dataTransfer.getData("text/plain"));
@@ -57,7 +65,7 @@ export default function Card(props) {
             return;
 
         store.swapCards(srcIdx, destIdx);
-    }
+    };
 
     const handleCopy = () => {
         const cards = [];
@@ -68,12 +76,12 @@ export default function Card(props) {
                 "text/plain": new Blob([JSON.stringify(cards)], {type: "text/plain"})
             })
         ]);
-    }
+    };
 
     const handleCut = () => {
         handleCopy();
         store.deleteCard(props.num);
-    }
+    };
 
     const handlePaste = async (e) => {
 
@@ -110,7 +118,7 @@ export default function Card(props) {
                         ctx.drawImage(img, 0, 0, newWidth*qualityFactor, newHeight*qualityFactor);
 
                         const base64 = canvas.toDataURL("image/jpeg", 0.9);
-                        store.setCard(props.num, base64, "");
+                        store.setCard(props.num, base64, cardText);
                         canvas.remove();
                     }
                 }
@@ -131,7 +139,35 @@ export default function Card(props) {
                 catch(err) {}
             }
         }
+    };
+
+    const handleDoubleClick = () => {
+        setEditMode(true);
+    };
+
+    const handleBlur = (e) => {
+        if(!isEditMode)
+            return;
+
+        if(e.relatedTarget == textRef.current)
+            return;
+
+        endEditMode();
     }
+
+    const endEditMode = () => {
+
+        const text = cardText.trim();
+
+        if(!store.hasCard(props.num) && text == "") {
+            setEditMode(false);
+            return;
+        }
+
+        setEditMode(false);
+        setCardText(text);
+        store.setCardText(props.num, text);
+    };
 
     function getText() {
         const text = store.getCardText(props.num);
@@ -141,7 +177,7 @@ export default function Card(props) {
         else {
             return text;
         }
-    }
+    };
 
     let selectedClass = isFocused ? " card-selected" : "";
 
@@ -155,7 +191,6 @@ export default function Card(props) {
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
                 onClick={handleClick}
-                onContextMenu={handleRightClick}
                 onBlur={handleUnfocus}
                 onFocus={handleFocus}
                 onDragStart={handleDragStart}
@@ -163,7 +198,7 @@ export default function Card(props) {
                 onDrop={handleDrop}
                 draggable={true}
                 style={{
-                    border: store.hasCard(props.num) ? "2px solid transparent" : "2px solid rgb(127, 127, 127)",
+                    border: store.getCardSrc(props.num) ? "2px solid transparent" : "2px solid rgb(127, 127, 127)",
                     width: cardWidth,
                     height: cardHeight
                 }}
@@ -178,7 +213,7 @@ export default function Card(props) {
                 }}>{props.num}</p>
                 <img
                     style={{
-                        visibility: store.hasCard(props.num) ? "visible" : "hidden"
+                        visibility: store.getCardSrc(props.num) ? "visible" : "hidden"
                     }}
                     id={`card-${props.num}`}
                     width={cardWidth}
@@ -188,14 +223,29 @@ export default function Card(props) {
             </div>
             <p
                 style={{
-                    display: layoutConfig.showText ? "inline" : "none",
-                    color: "white",
-                    fontSize: "8pt",
+                    display: layoutConfig.showText ? "block" : "none",
+                    color: store.getCardText(props.num) ? "white" : "gray",
+                    fontSize: "10pt",
                     marginBlock: 0,
-                    marginTop: "0.5em"
+                    marginTop: "0.5em",
+                    userSelect: "text"
                 }}
+                onFocus={(e) => e.stopPropagation()}
+                onBlur={handleBlur}
+                onDoubleClick={handleDoubleClick}
+                tabIndex={0}
             >
-                {getText()}
+                {
+                    isEditMode ?
+                    <input type="text"
+                        ref={textRef}
+                        value={cardText}
+                        onBlur={handleBlur}
+                        onChange={(e) => setCardText(e.target.value)}
+                        onKeyDown={(e) => {if(e.key == "Enter") endEditMode()}}
+                    />
+                    : getText()
+                }
             </p>
         </div>
     );

@@ -8,6 +8,8 @@ const StoreAction = {
     NEW_GALLERY: "NEW_GALLERY",
 
     SET_CARD: "SET_CARD",
+    SET_CARD_TEXT: "SET_CARD_TEXT",
+    SET_PAGE_TEXT: "SET_PAGE_TEXT",
     DELETE_CARD: "DELETE_CARD",
     SWAP_CARDS: "SWAP_CARDS",
 
@@ -22,25 +24,26 @@ export function StoreContextProvider({children}) {
     const [store, dispatch] = useReducer(storeReducer, {
         layout: LayoutMode.BINDER,
         cards: new Array(Global.defaultBinderSize).fill(null),
+        pages: new Array(Global.defaultBinderSize / Global.cardsPerPage).fill(null)
     });
 
     function storeReducer(store, action) {
         const {type, payload} = action;
         switch(type) {
             case StoreAction.NEW_BINDER: {
-                const newCards = new Array(Global.defaultBinderSize).fill(null);
                 return {
                     ...store,
                     layout: LayoutMode.BINDER,
-                    cards: newCards
+                    cards: new Array(Global.defaultBinderSize).fill(null),
+                    pages: new Array(Global.defaultBinderSize / Global.cardsPerPage).fill(null)
                 };
             }
             case StoreAction.NEW_GALLERY: {
-                const newCards = new Array(Global.defaultGallerySize).fill(null);
                 return {
                     ...store,
                     layout: LayoutMode.GALLERY,
-                    cards: newCards
+                    cards: new Array(Global.defaultGallerySize).fill(null),
+                    pages: new Array(Global.defaultGallerySize / Global.cardsPerPage).fill(null)
                 };
             };
             case StoreAction.SET_CARD: {
@@ -50,7 +53,28 @@ export function StoreContextProvider({children}) {
                     ...store,
                     cards: newCards
                 };
-            }
+            };
+            case StoreAction.SET_CARD_TEXT: {
+                const newCards = [...store.cards];
+                if(newCards[payload.index] == null)
+                    newCards[payload.index] = store.createCard(null, payload.text);
+                else
+                    newCards[payload.index].text = payload.text;
+
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            };
+            case StoreAction.SET_PAGE_TEXT: {
+                const newPages = [...store.pages];
+                newPages[payload.index] = payload.text;
+
+                return {
+                    ...store,
+                    pages: newPages
+                };
+            };
             case StoreAction.DELETE_CARD: {
                 const newCards = [...store.cards];
                 newCards[payload.index] = null;
@@ -69,13 +93,18 @@ export function StoreContextProvider({children}) {
                 };
             }
             case StoreAction.DELETE_PAGE: {
-                // deletes cards [payload.pageIndex*9 ... payload.pageIndex*9+8]
                 const newCards = [
                     ...store.cards.slice(0, payload.pageIndex*9),
-                    ...store.cards.slice(payload.pageIndex*9+9)];
+                    ...store.cards.slice(payload.pageIndex*9+9)
+                ];
+                const newPages = [
+                    ...store.pages.slice(0, payload.pageIndex),
+                    ...store.pages.slice(payload.pageIndex+1)
+                ];
                 return {
                     ...store,
-                    cards: newCards
+                    cards: newCards,
+                    pages: newPages
                 };
             }
             case StoreAction.INSERT_PAGE: {
@@ -86,23 +115,40 @@ export function StoreContextProvider({children}) {
                     ...newPage,
                     ...store.cards.slice(payload.pageIndex*9)
                 ];
+                const newPages = [
+                    ...store.pages.slice(0, payload.pageIndex),
+                    null,
+                    ...store.pages.slice(payload.pageIndex)
+                ];
                 return {
                     ...store,
-                    cards: newCards
+                    cards: newCards,
+                    pages: newPages
                 };
             }
             case StoreAction.IMPORT_BINDER: {
+                let newPages = payload.pages;
+                if(newPages == null) {
+                    newPages = new Array(payload.cards.length / Global.cardsPerPage).fill(null);
+                }
+
                 return {
                     ...store,
                     layout: LayoutMode.BINDER,
-                    cards: payload.cards
+                    cards: payload.cards,
+                    pages: newPages
                 };
             }
             case StoreAction.IMPORT_GALLERY: {
+                let newPages = payload.pages;
+                if(newPages == null) {
+                    newPages = new Array(payload.cards.length / Global.cardsPerPage).fill(null);
+                }
                 return {
                     ...store,
                     layout: LayoutMode.GALLERY,
-                    cards: payload.cards
+                    cards: payload.cards,
+                    pages: newPages
                 };
             };
             default:
@@ -134,18 +180,40 @@ export function StoreContextProvider({children}) {
 
     store.getCardText = (index) => {
         return store.cards[index]?.text;
-    }
+    };
+
+    store.getPageText = (pageIndex) => {
+        return store.pages[pageIndex];
+    };
 
     store.getLayout = () => {
         return store.layout;
     };
+    
+    store.getPages = () => {
+        console.log(store.pages);
+    }
 
     store.setCard = (index, src, text) => {
         dispatch({
             type: StoreAction.SET_CARD,
             payload: {index, src, text}
-        })
-    }
+        });
+    };
+
+    store.setCardText = (index, text) => {
+        dispatch({
+            type: StoreAction.SET_CARD_TEXT,
+            payload: {index, text}
+        });
+    };
+
+    store.setPageText = (index, text) => {
+        dispatch({
+            type: StoreAction.SET_PAGE_TEXT,
+            payload: {index, text}
+        });
+    };
 
     store.deleteCard = (index) => {
         dispatch({
@@ -189,17 +257,17 @@ export function StoreContextProvider({children}) {
         });
     };
 
-    store.importBinder = (cards) => {
+    store.importBinder = (cards, pages) => {
         dispatch({
             type: StoreAction.IMPORT_BINDER,
-            payload: {cards}
+            payload: {cards, pages}
         });
     };
 
-    store.importGallery = (cards) => {
+    store.importGallery = (cards, pages) => {
         dispatch({
             type: StoreAction.IMPORT_GALLERY,
-            payload: {cards}
+            payload: {cards, pages}
         });
     };
 

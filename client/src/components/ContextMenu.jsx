@@ -26,6 +26,10 @@ export default function ContextMenu(props) {
         store.insertPage(props.num+1);
     };
 
+    function handleDeletePage() {
+        store.deletePage(props.num);
+    }
+
     function handleShiftCardsLeft() {
         props.setShowMenu(false);
     };
@@ -50,6 +54,8 @@ export default function ContextMenu(props) {
         >
             {menuOption("Insert Page Before", handleInsertPageBefore)}
             {menuOption("Insert Page After", handleInsertPageAfter)}
+            <hr />
+            {menuOption("Delete Page", handleDeletePage)}
             {/* {menuOption("Shift Cards Left")} */}
             {/* {menuOption("Shift Cards Right")} */}
         </div>
