@@ -1,34 +1,39 @@
 import { useContext } from "react";
 import StoreContext from "../store";
 
-function menuOption(text, onClick) {
-    return (
-        <div
-            className="menu-option"
-            onClick={onClick}
-        >
-            {text}
-        </div>
-    );
-}
-
 export default function ContextMenu(props) {
 
     const { store } = useContext(StoreContext);
 
+    function menuOption(text, onClick) {
+        return (
+            <div
+                className="menu-option"
+                onClick={() => {
+                    onClick();
+                    props.setShowMenu(false);
+                }}
+            >
+                {text}
+            </div>
+        );
+    };
+
     function handleInsertPageBefore() {
-        props.setShowMenu(false);
         store.insertPage(props.num);
     };
 
     function handleInsertPageAfter() {
-        props.setShowMenu(false);
         store.insertPage(props.num+1);
+    };
+
+    function handleClearPage() {
+        store.clearPage(props.num);
     };
 
     function handleDeletePage() {
         store.deletePage(props.num);
-    }
+    };
 
     function handleShiftCardsLeft() {
         props.setShowMenu(false);
@@ -55,6 +60,7 @@ export default function ContextMenu(props) {
             {menuOption("Insert Page Before", handleInsertPageBefore)}
             {menuOption("Insert Page After", handleInsertPageAfter)}
             <hr />
+            {menuOption("Clear Page", handleClearPage)}
             {menuOption("Delete Page", handleDeletePage)}
             {/* {menuOption("Shift Cards Left")} */}
             {/* {menuOption("Shift Cards Right")} */}

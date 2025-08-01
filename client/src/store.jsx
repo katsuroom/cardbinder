@@ -15,6 +15,7 @@ const StoreAction = {
 
     DELETE_PAGE: "DELETE_PAGE",
     INSERT_PAGE: "INSERT_PAGE",
+    CLEAR_PAGE: "CLEAR_PAGE",
 
     IMPORT_BINDER: "IMPORT_BINDER",
     IMPORT_GALLERY: "IMPORT_GALLERY"
@@ -125,7 +126,21 @@ export function StoreContextProvider({children}) {
                     cards: newCards,
                     pages: newPages
                 };
-            }
+            };
+            case StoreAction.CLEAR_PAGE: {
+                const newCards = [...store.cards];
+                const newPages = [...store.pages];
+                for(let i = 0; i < 9; ++i) {
+                    newCards[payload.pageIndex*9 + i] = null;
+                }
+                newPages[payload.pageIndex] = null;
+
+                return {
+                    ...store,
+                    cards: newCards,
+                    pages: newPages
+                };
+            };
             case StoreAction.IMPORT_BINDER: {
                 let newPages = payload.pages;
                 if(newPages == null) {
@@ -233,14 +248,21 @@ export function StoreContextProvider({children}) {
         dispatch({
             type: StoreAction.DELETE_PAGE,
             payload: {pageIndex}
-        })
+        });
     };
 
     store.insertPage = (pageIndex) => {
         dispatch({
             type: StoreAction.INSERT_PAGE,
             payload: {pageIndex}
-        })
+        });
+    };
+
+    store.clearPage = (pageIndex) => {
+        dispatch({
+            type: StoreAction.CLEAR_PAGE,
+            payload: {pageIndex}
+        });
     };
 
     store.newBinder = () => {
