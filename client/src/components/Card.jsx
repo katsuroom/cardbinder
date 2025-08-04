@@ -228,7 +228,11 @@ export default function Card(props) {
                     fontSize: "10pt",
                     marginBlock: 0,
                     marginTop: "0.5em",
-                    userSelect: "text"
+                    userSelect: "text",
+                    overflowWrap: "break-word",
+                    maxWidth: cardWidth,
+                    whiteSpace: "pre-line",
+                    lineHeight: 1.5,
                 }}
                 onFocus={(e) => e.stopPropagation()}
                 onBlur={handleBlur}
@@ -237,12 +241,15 @@ export default function Card(props) {
             >
                 {
                     isEditMode ?
-                    <input type="text"
+                    <textarea rows={3}
                         ref={textRef}
                         value={cardText}
+                        style={{
+                            resize: "none",
+                            width: "100%"
+                        }}
                         onBlur={handleBlur}
                         onChange={(e) => setCardText(e.target.value)}
-                        onKeyDown={(e) => {if(e.key == "Enter") endEditMode()}}
                     />
                     : getText()
                 }
