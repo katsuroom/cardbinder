@@ -7,6 +7,7 @@ import Toolbar from './Toolbar';
 
 import StoreContext from '../store';
 import { Global, LayoutMode } from '../util';
+import TitleBar from './Titlebar';
 
 export default function App() {
 
@@ -83,6 +84,7 @@ export default function App() {
                 minWidth: "fit-content"
             }}
         >
+            <TitleBar />
             {getView()}
         </div>
         </>

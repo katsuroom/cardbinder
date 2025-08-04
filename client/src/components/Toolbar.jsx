@@ -79,7 +79,7 @@ export default function Toolbar() {
         const zipfile = await zip.generateAsync({type: "blob"});
         const link = document.createElement("a");
         link.href = URL.createObjectURL(zipfile);
-        link.download = "binder" + fileExt;
+        link.download = store.getTitle() + fileExt;
         link.click();
         URL.revokeObjectURL(link.href);
     };
@@ -91,6 +91,8 @@ export default function Toolbar() {
 
     const handleChange = async (e) => {
         const file = e.target.files[0];
+
+        const title = file.name.split(".")[0];
 
         const zip = await JSZip.loadAsync(file);
 
@@ -126,9 +128,9 @@ export default function Toolbar() {
             }
 
             if(layout == LayoutMode.BINDER)
-                store.importBinder(cards, pages);
+                store.importBinder(title, cards, pages);
             else if(layout == LayoutMode.GALLERY)
-                store.importGallery(cards, pages);
+                store.importGallery(title, cards, pages);
         }
         else {
             // old import
@@ -144,7 +146,7 @@ export default function Toolbar() {
                 cards[index] = store.createCard(base64, "");
             }
             
-            store.importBinder(cards, null);
+            store.importBinder(title, cards, null);
         }
     }
 
@@ -159,18 +161,18 @@ export default function Toolbar() {
             
             <div style={{display: "flex", gap: "1em"}}>
             
-            <input
-                style={{display: "none"}}
-                type="file"
-                id="file-selector"
-                accept={fileExt}
-                onChange={handleChange}
-                onClick={(e) => e.target.value = null}
-            />
-            <button onClick={handleNewBinder}>New Binder</button>
-            <button onClick={handleNewGallery}>New Gallery</button>
-            <button onClick={handleImport}>Import Binder</button>
-            <button onClick={handleExport}>Export Binder</button>
+                <input
+                    style={{display: "none"}}
+                    type="file"
+                    id="file-selector"
+                    accept={fileExt}
+                    onChange={handleChange}
+                    onClick={(e) => e.target.value = null}
+                />
+                <button onClick={handleNewBinder}>New Binder</button>
+                <button onClick={handleNewGallery}>New Gallery</button>
+                <button onClick={handleImport}>Import Binder</button>
+                <button onClick={handleExport}>Export Binder</button>
             </div>
         </div>
     );

@@ -7,6 +7,8 @@ const StoreAction = {
     NEW_BINDER: "NEW_BINDER",
     NEW_GALLERY: "NEW_GALLERY",
 
+    SET_TITLE: "SET_TITLE",
+
     SET_CARD: "SET_CARD",
     SET_CARD_TEXT: "SET_CARD_TEXT",
     SET_PAGE_TEXT: "SET_PAGE_TEXT",
@@ -23,6 +25,7 @@ const StoreAction = {
 
 export function StoreContextProvider({children}) {
     const [store, dispatch] = useReducer(storeReducer, {
+        title: "binder",
         layout: LayoutMode.BINDER,
         cards: new Array(Global.defaultBinderSize).fill(null),
         pages: new Array(Global.defaultBinderSize / Global.cardsPerPage).fill(null)
@@ -45,6 +48,12 @@ export function StoreContextProvider({children}) {
                     layout: LayoutMode.GALLERY,
                     cards: new Array(Global.defaultGallerySize).fill(null),
                     pages: new Array(Global.defaultGallerySize / Global.cardsPerPage).fill(null)
+                };
+            };
+            case StoreAction.SET_TITLE: {
+                return {
+                    ...store,
+                    title: payload.title
                 };
             };
             case StoreAction.SET_CARD: {
@@ -149,6 +158,7 @@ export function StoreContextProvider({children}) {
 
                 return {
                     ...store,
+                    title: payload.title,
                     layout: LayoutMode.BINDER,
                     cards: payload.cards,
                     pages: newPages
@@ -161,6 +171,7 @@ export function StoreContextProvider({children}) {
                 }
                 return {
                     ...store,
+                    title: payload.title,
                     layout: LayoutMode.GALLERY,
                     cards: payload.cards,
                     pages: newPages
@@ -204,10 +215,17 @@ export function StoreContextProvider({children}) {
     store.getLayout = () => {
         return store.layout;
     };
-    
-    store.getPages = () => {
-        console.log(store.pages);
-    }
+
+    store.getTitle = () => {
+        return store.title;
+    };
+
+    store.setTitle = (title) => {
+        dispatch({
+            type: StoreAction.SET_TITLE,
+            payload: {title}
+        });
+    };
 
     store.setCard = (index, src, text) => {
         dispatch({
@@ -279,17 +297,17 @@ export function StoreContextProvider({children}) {
         });
     };
 
-    store.importBinder = (cards, pages) => {
+    store.importBinder = (title, cards, pages) => {
         dispatch({
             type: StoreAction.IMPORT_BINDER,
-            payload: {cards, pages}
+            payload: {title, cards, pages}
         });
     };
 
-    store.importGallery = (cards, pages) => {
+    store.importGallery = (title, cards, pages) => {
         dispatch({
             type: StoreAction.IMPORT_GALLERY,
-            payload: {cards, pages}
+            payload: {title, cards, pages}
         });
     };
 
