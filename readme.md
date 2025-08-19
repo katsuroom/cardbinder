@@ -1,5 +1,7 @@
 # cardbinder
 
+Try this out at: https://katsuroom.github.io/cardbinder/
+
 Create binder page layouts for trading cards. Made with React + Vite.
 
 Uses Font Awesome: https://fontawesome.com/download
