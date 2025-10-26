@@ -228,7 +228,7 @@ export default function Card(props) {
                     fontSize: "10pt",
                     marginBlock: 0,
                     marginTop: "0.5em",
-                    userSelect: "text",
+                    // userSelect: "text",
                     overflowWrap: "break-word",
                     maxWidth: cardWidth,
                     whiteSpace: "pre-line",

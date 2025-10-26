@@ -2,6 +2,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     margin: 0;
     min-width: fit-content;
+    user-select: none;
 }
 
 img {
@@ -36,7 +37,7 @@ canvas {
     font-family: "Calibri";
     background-color: rgb(63, 63, 63);
     padding: 1em;
-    user-select: none;  /* disable text selection */
+    /* user-select: none;  disable text selection */
 }
 
 .card-page-selected {

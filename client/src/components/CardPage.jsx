@@ -158,7 +158,7 @@ export default function CardPage(props) {
                         lineHeight: 1.5,
                         width: "100%"
                     }}
-                    onFocus={(e) => e.stopPropagation()}
+                    // onFocus={(e) => e.stopPropagation()}
                     onBlur={handleTextBlur}
                     onDoubleClick={handleDoubleClick}
                     tabIndex={0}

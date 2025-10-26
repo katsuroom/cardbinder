@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import StoreContext from "../store";
 
 export default function TitleBar() {
@@ -8,6 +8,11 @@ export default function TitleBar() {
     const [isEditMode, setEditMode] = useState(false);
     const [titleText, setTitleText] = useState(store.getTitle());
     const textRef = useRef(null);
+
+    useEffect(() => {
+        const text = store.getTitle();
+        setTitleText(text);
+    }, [store.getTitle()]);
 
     const handleDoubleClick = (e) => {
         setEditMode(true);
