@@ -48,6 +48,26 @@ export default function Card(props) {
             store.deleteCard(props.num);
             e.target.blur();
         }
+
+        // Keys for Firefox
+        else if(e.ctrlKey) {
+            switch(e.key.toLowerCase()) {
+                case 'x': {
+                    handleCut(e);
+                    break;
+                }
+                case 'c': {
+                    handleCopy(e);
+                    break;
+                }
+                case 'v': {
+                    handlePaste(e);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
     };
 
     const handleDragStart = (e) => {

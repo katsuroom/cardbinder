@@ -21,6 +21,10 @@ Static HTML will be built in `/client/dist`.
 
 Copy an online image and paste it into one of the card slots. Click "Export Binder" to download a file containing your binder data, and press "Import Binder" to load a binder file from your computer.
 
+## Limitations
+- **Firefox**: When pasting an image from another site, you must also click the "Paste" popup box that appears.
+- Card pages have a fixed capacity of 9 cards.
+
 ## Features
 
 ### Modes
