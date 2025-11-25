@@ -36,7 +36,8 @@ Copy an online image and paste it into one of the card slots. Click "Export Bind
 - CTRL+C / CTRL+X on a card slot to copy/cut to the clipboard.
 - CTRL+V to paste an image or copied card slot.
 - DELETE to clear.
-- Drag a card to move to another space, or swap with another card.
+- Drag a card to move to another space, or swap with another card.-
+- Right click a card to toggle grayscale (useful for identifying which cards you own).
 - _(Gallery Mode only)_: Double click the text below a card to edit the card description.
 
 ### Card Page Actions
