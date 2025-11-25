@@ -76,7 +76,7 @@ export default function CardPage(props) {
                         if(card == null)
                             continue;
                         
-                        store.setCard(props.num*9+i, card.src, card.text);
+                        store.setCard(props.num*9+i, card);
                     }
                 }
                 catch(err) {

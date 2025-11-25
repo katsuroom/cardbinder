@@ -114,16 +114,17 @@ export default function Toolbar() {
 
                 const cardText = config.cards[i].text;
                 const cardFilename = config.cards[i].filename;
+                const cardOwned = config.cards[i].owned ?? true;
 
                 if(cardFilename != null) {
                     const cardFile = zip.files[cardFilename];
 
                     const cardBlob = await cardFile.async("blob");
                     const base64 = await blobTobase64(cardBlob);
-                    cards[i] = store.createCard(base64, cardText);
+                    cards[i] = store.createCard(base64, cardText, cardOwned);
                 }
                 else {
-                    cards[i] = store.createCard(null, cardText);
+                    cards[i] = store.createCard(null, cardText, true);
                 }
             }
 
@@ -143,7 +144,7 @@ export default function Toolbar() {
                 const blob = await file.async("blob");
                 const base64 = await blobTobase64(blob);
 
-                cards[index] = store.createCard(base64, "");
+                cards[index] = store.createCard(base64, "", true);
             }
             
             store.importBinder(title, cards, null);

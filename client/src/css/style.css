@@ -31,6 +31,10 @@ canvas {
     opacity: 0.3;
 }
 
+.card-not-owned img {
+    filter: grayscale(1) brightness(0.75);
+}
+
 .card-page {
     position: relative;
     width: fit-content;

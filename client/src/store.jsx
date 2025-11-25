@@ -10,7 +10,9 @@ const StoreAction = {
     SET_TITLE: "SET_TITLE",
 
     SET_CARD: "SET_CARD",
+    SET_CARD_IMG: "SET_CARD_IMG",
     SET_CARD_TEXT: "SET_CARD_TEXT",
+    SET_CARD_OWNED: "SET_CARD_OWNED",
     SET_PAGE_TEXT: "SET_PAGE_TEXT",
     DELETE_CARD: "DELETE_CARD",
     SWAP_CARDS: "SWAP_CARDS",
@@ -58,7 +60,19 @@ export function StoreContextProvider({children}) {
             };
             case StoreAction.SET_CARD: {
                 const newCards = [...store.cards];
-                newCards[payload.index] = store.createCard(payload.src, payload.text);
+                newCards[payload.index] = payload.card;
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            };
+            case StoreAction.SET_CARD_IMG: {
+                const newCards = [...store.cards];
+                if(newCards[payload.index] == null)
+                    newCards[payload.index] = store.createCard(payload.src, "", true);
+                else
+                    newCards[payload.index].src = payload.src;
+
                 return {
                     ...store,
                     cards: newCards
@@ -67,9 +81,21 @@ export function StoreContextProvider({children}) {
             case StoreAction.SET_CARD_TEXT: {
                 const newCards = [...store.cards];
                 if(newCards[payload.index] == null)
-                    newCards[payload.index] = store.createCard(null, payload.text);
+                    newCards[payload.index] = store.createCard(null, payload.text, true);
                 else
                     newCards[payload.index].text = payload.text;
+
+                return {
+                    ...store,
+                    cards: newCards
+                };
+            };
+            case StoreAction.SET_CARD_OWNED: {
+                const newCards = [...store.cards];
+                if(newCards[payload.index] == null)
+                    return {...store};
+                else
+                    newCards[payload.index].owned = payload.owned;
 
                 return {
                     ...store,
@@ -178,13 +204,13 @@ export function StoreContextProvider({children}) {
                 };
             };
             default:
-                return;
+                return {...store};
         }
     }
 
-    store.createCard = (src, text) => {
+    store.createCard = (src, text, owned) => {
         return {
-            src, text
+            src, text, owned
         };
     };
 
@@ -208,6 +234,10 @@ export function StoreContextProvider({children}) {
         return store.cards[index]?.text;
     };
 
+    store.getCardOwned = (index) => {
+        return store.cards[index]?.owned;
+    };
+
     store.getPageText = (pageIndex) => {
         return store.pages[pageIndex];
     };
@@ -227,10 +257,17 @@ export function StoreContextProvider({children}) {
         });
     };
 
-    store.setCard = (index, src, text) => {
+    store.setCard = (index, card) => {
         dispatch({
             type: StoreAction.SET_CARD,
-            payload: {index, src, text}
+            payload: {index, card}
+        });
+    };
+
+    store.setCardImg = (index, src) => {
+        dispatch({
+            type: StoreAction.SET_CARD_IMG,
+            payload: {index, src}
         });
     };
 
@@ -240,6 +277,18 @@ export function StoreContextProvider({children}) {
             payload: {index, text}
         });
     };
+
+    store.setCardOwned = (index, owned) => {
+        dispatch({
+            type: StoreAction.SET_CARD_OWNED,
+            payload: {index, owned}
+        });
+    };
+
+    store.toggleCardOwned = (index) => {
+        let owned = store.getCard(index)?.owned ?? true;
+        store.setCardOwned(!owned);
+    }
 
     store.setPageText = (index, text) => {
         dispatch({

@@ -9,6 +9,7 @@ export default function Card(props) {
     const [isFocused, setIsFocused] = useState(false);
     const [isEditMode, setEditMode] = useState(false);
     const [cardText, setCardText] = useState(store.getCardText(props.num) || "");
+    const [isOwned, setIsOwned] = useState(store.getCardOwned(props.num) || true);
 
     const textRef = useRef(null);
 
@@ -41,6 +42,16 @@ export default function Card(props) {
         if(targetEl.tagName == "IMG") {
             targetEl.parentElement.focus();
         }
+    };
+
+    const handleRightClick = (e) => {
+        e.preventDefault();
+
+        if(!store.getCardSrc(props.num))
+            return;
+
+        setIsOwned(!isOwned);
+        store.toggleCardOwned(props.num);
     };
 
     const handleKeyDown = (e) => {
@@ -138,7 +149,7 @@ export default function Card(props) {
                         ctx.drawImage(img, 0, 0, newWidth*qualityFactor, newHeight*qualityFactor);
 
                         const base64 = canvas.toDataURL("image/jpeg", 0.9);
-                        store.setCard(props.num, base64, cardText);
+                        store.setCardImg(props.num, base64);
                         canvas.remove();
                     }
                 }
@@ -153,7 +164,7 @@ export default function Card(props) {
                     const cards = JSON.parse(text);
                     if(cards.length == 1) {
                         const card = cards[0];
-                        store.setCard(props.num, card.src, card.text);
+                        store.setCard(props.num, card);
                     }
                 }
                 catch(err) {}
@@ -200,17 +211,19 @@ export default function Card(props) {
     };
 
     let selectedClass = isFocused ? " card-selected" : "";
+    let ownedClass = isOwned ? "" : " card-not-owned";
 
     return (
         <div>
             <div
-                className={`card${selectedClass}`}
+                className={`card${selectedClass}${ownedClass}`}
                 tabIndex={0}
                 onCopy={handleCopy}
                 onCut={handleCut}
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
                 onClick={handleClick}
+                onContextMenu={handleRightClick}
                 onBlur={handleUnfocus}
                 onFocus={handleFocus}
                 onDragStart={handleDragStart}
