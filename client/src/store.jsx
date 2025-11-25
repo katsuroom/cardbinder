@@ -286,8 +286,8 @@ export function StoreContextProvider({children}) {
     };
 
     store.toggleCardOwned = (index) => {
-        let owned = store.getCard(index)?.owned ?? true;
-        store.setCardOwned(!owned);
+        let owned = store.getCardOwned(index);
+        store.setCardOwned(index, !owned);
     }
 
     store.setPageText = (index, text) => {

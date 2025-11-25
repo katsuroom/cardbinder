@@ -9,7 +9,6 @@ export default function Card(props) {
     const [isFocused, setIsFocused] = useState(false);
     const [isEditMode, setEditMode] = useState(false);
     const [cardText, setCardText] = useState(store.getCardText(props.num) || "");
-    const [isOwned, setIsOwned] = useState(store.getCardOwned(props.num) || true);
 
     const textRef = useRef(null);
 
@@ -50,7 +49,6 @@ export default function Card(props) {
         if(!store.getCardSrc(props.num))
             return;
 
-        setIsOwned(!isOwned);
         store.toggleCardOwned(props.num);
     };
 
@@ -211,12 +209,11 @@ export default function Card(props) {
     };
 
     let selectedClass = isFocused ? " card-selected" : "";
-    let ownedClass = isOwned ? "" : " card-not-owned";
 
     return (
         <div>
             <div
-                className={`card${selectedClass}${ownedClass}`}
+                className={`card${selectedClass}${store.getCardOwned(props.num) ? "" : " card-not-owned"}`}
                 tabIndex={0}
                 onCopy={handleCopy}
                 onCut={handleCut}

@@ -49,7 +49,8 @@ export default function Toolbar() {
                     const filename = i + ".jpg";
                     cards[i] = {
                         filename,
-                        text: store.getCardText(i)
+                        text: store.getCardText(i),
+                        owned: store.getCardOwned(i)
                     };
 
                     zip.file(filename, blob);
