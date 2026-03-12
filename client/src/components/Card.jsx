@@ -107,7 +107,8 @@ export default function Card(props) {
         ]);
     };
 
-    const handleCut = () => {
+    const handleCut = (e) => {
+        e.preventDefault();
         handleCopy();
         store.deleteCard(props.num);
     };
